@@ -1,0 +1,20 @@
+cc_binary {
+    name: "tesla-android-configuration-manager",
+
+    srcs: ["tesla-android-configuration-manager.cpp", "cJSON.c"],
+
+    shared_libs: [
+        "libcutils",
+        "libutils",
+    ],
+
+    cppflags: [
+        "-Wall",
+        "-Werror",
+        "-fexceptions",
+        "-std=c++17",
+        "-Wno-unused-parameter",
+        "-Wno-uninitialized",
+        "-Wno-unused-variable",
+    ],
+}
