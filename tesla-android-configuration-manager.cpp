@@ -7,7 +7,10 @@ const char *BAND_TYPE_SYSTEM_PROPERTY_KEY = "persist.tesla-android.softap.band_t
 const char *CHANNEL_SYSTEM_PROPERTY_KEY = "persist.tesla-android.softap.channel";
 const char *CHANNEL_WIDTH_SYSTEM_PROPERTY_KEY = "persist.tesla-android.softap.channel_width";
 const char *IS_ENABLED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.softap.is_enabled";
-
+const char *OFFLINE_MODE_IS_ENABLED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.offline-mode.is_enabled";
+const char *OFFLINE_MODE_TELEMETRY_IS_ENABLED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.offline-mode.telemetry.is_enabled";
+const char *OFFLINE_MODE_TESLA_FIRMWARE_DOWNLOADS_IS_ENABLED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.offline-mode.tesla-firmware-downloads";
+ 
 int get_system_property_int(const char* prop_name) {
   char prop_value[PROPERTY_VALUE_MAX];
   if (property_get(prop_name, prop_value, nullptr) > 0) {
@@ -85,6 +88,9 @@ int main() {
     add_number_property(json, CHANNEL_SYSTEM_PROPERTY_KEY, get_system_property_int(CHANNEL_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, CHANNEL_WIDTH_SYSTEM_PROPERTY_KEY, get_system_property_int(CHANNEL_WIDTH_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, IS_ENABLED_SYSTEM_PROPERTY_KEY, get_system_property_int(IS_ENABLED_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, OFFLINE_MODE_IS_ENABLED_SYSTEM_PROPERTY_KEY, get_system_property_int(OFFLINE_MODE_IS_ENABLED_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, OFFLINE_MODE_TELEMETRY_IS_ENABLED_SYSTEM_PROPERTY_KEY, get_system_property_int(OFFLINE_MODE_TELEMETRY_IS_ENABLED_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, OFFLINE_MODE_TESLA_FIRMWARE_DOWNLOADS_IS_ENABLED_SYSTEM_PROPERTY_KEY, get_system_property_int(OFFLINE_MODE_TESLA_FIRMWARE_DOWNLOADS_IS_ENABLED_SYSTEM_PROPERTY_KEY), res);
 
     char* json_str = cJSON_Print(json);
 
@@ -150,6 +156,48 @@ int main() {
   server.Options("/softApState", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
+  
+  server.Post("/offlineModeState", [](const httplib::Request& req, httplib::Response& res) {
+    const char* new_value = req.body.c_str();
+    int result = property_set(OFFLINE_MODE_IS_ENABLED_SYSTEM_PROPERTY_KEY, new_value);
+    if (result == 0) {
+        handle_post_success(res);
+    } else {
+        handle_error(res);
+    }
+  });
+
+  server.Options("/offlineModeState", [](const httplib::Request& req, httplib::Response& res) {
+    handle_preflight(res);
+  });
+
+  server.Post("/offlineModeTelemetryState", [](const httplib::Request& req, httplib::Response& res) {
+    const char* new_value = req.body.c_str();
+    int result = property_set(OFFLINE_MODE_TELEMETRY_IS_ENABLED_SYSTEM_PROPERTY_KEY, new_value);
+    if (result == 0) {
+        handle_post_success(res);
+    } else {
+        handle_error(res);
+    }
+  });
+
+  server.Options("/offlineModeTelemetryState", [](const httplib::Request& req, httplib::Response& res) {
+    handle_preflight(res);
+  });
+
+  server.Post("/offlineModeTeslaFirmwareDownloads", [](const httplib::Request& req, httplib::Response& res) {
+    const char* new_value = req.body.c_str();
+    int result = property_set(OFFLINE_MODE_TESLA_FIRMWARE_DOWNLOADS_IS_ENABLED_SYSTEM_PROPERTY_KEY, new_value);
+    if (result == 0) {
+        handle_post_success(res);
+    } else {
+        handle_error(res);
+    }
+  });
+
+  server.Options("/offlineModeTeslaFirmwareDownloads", [](const httplib::Request& req, httplib::Response& res) {
+    handle_preflight(res);
+   });
 
   server.set_post_routing_handler([](const auto& req, auto& res) {
     res.set_header("Allow", "GET, POST, HEAD, OPTIONS");
