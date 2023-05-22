@@ -79,6 +79,11 @@ int main() {
 
   server.Get("/health", [](const httplib::Request& req, httplib::Response& res) {
     res.set_content("OK", "text/plain");
+    res.status = 200;
+  });
+ 
+  server.Options("/health", [](const httplib::Request& req, httplib::Response& res) {
+    handle_preflight(res);
   });
 
   server.Get("/configuration", [](const httplib::Request& req, httplib::Response& res) {
@@ -96,9 +101,14 @@ int main() {
 
     res.set_header("Content-Type", "application/json");
     res.set_content(json_str, "application/json");
+    res.status = 200;
 
     cJSON_Delete(json);
     free(json_str);
+  });
+ 
+  server.Options("/configuration", [](const httplib::Request& req, httplib::Response& res) {
+    handle_preflight(res);
   });
 
   server.Post("/softApBand", [](const httplib::Request& req, httplib::Response& res) {
