@@ -58,6 +58,22 @@ void add_number_property(cJSON* json, const char* prop_name, int prop_value, htt
   cJSON_AddNumberToObject(json, prop_name, prop_value);
 }
 
+int get_cpu_temperature() {
+    FILE* file = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
+    if (file == NULL) {
+        printf("Failed to open the file.\n");
+        return -1;
+    }
+
+    int temperature;
+    fscanf(file, "%d", &temperature);
+
+    fclose(file);
+
+    int temperatureCelsius = temperature / 1000;
+    return temperatureCelsius;
+}
+
 void start_softap() {
   system("cmd wifi start-softap-with-existing-config");
 }
@@ -78,10 +94,20 @@ int main() {
   start_softap_if_enabled();
 
   server.Get("/health", [](const httplib::Request& req, httplib::Response& res) {
-    res.set_content("OK", "text/plain");
+    cJSON* json = cJSON_CreateObject();
+
+    add_number_property(json, "cpu_temperature", get_cpu_temperature(),  res);
+
+    char* json_str = cJSON_Print(json);
+
+    res.set_header("Content-Type", "application/json");
+    res.set_content(json_str, "application/json");
     res.status = 200;
+
+    cJSON_Delete(json);
+    free(json_str);
   });
- 
+
   server.Options("/health", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
@@ -106,7 +132,7 @@ int main() {
     cJSON_Delete(json);
     free(json_str);
   });
- 
+
   server.Options("/configuration", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
@@ -166,7 +192,7 @@ int main() {
   server.Options("/softApState", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
-  
+
   server.Post("/offlineModeState", [](const httplib::Request& req, httplib::Response& res) {
     const char* new_value = req.body.c_str();
     int result = property_set(OFFLINE_MODE_IS_ENABLED_SYSTEM_PROPERTY_KEY, new_value);
