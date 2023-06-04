@@ -1,7 +1,10 @@
+#include <sstream>
 #include <cstdlib>
 #include <httplib.h>
 #include <cJSON.h>
 #include <cutils/properties.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 const char *BAND_TYPE_SYSTEM_PROPERTY_KEY = "persist.tesla-android.softap.band_type";
 const char *CHANNEL_SYSTEM_PROPERTY_KEY = "persist.tesla-android.softap.channel";
@@ -10,7 +13,11 @@ const char *IS_ENABLED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.softap.is_en
 const char *OFFLINE_MODE_IS_ENABLED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.offline-mode.is_enabled";
 const char *OFFLINE_MODE_TELEMETRY_IS_ENABLED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.offline-mode.telemetry.is_enabled";
 const char *OFFLINE_MODE_TESLA_FIRMWARE_DOWNLOADS_IS_ENABLED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.offline-mode.tesla-firmware-downloads";
- 
+const char *VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.resolution.width";
+const char *VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.resolution.height";
+const char *VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.density";
+
+
 int get_system_property_int(const char* prop_name) {
   char prop_value[PROPERTY_VALUE_MAX];
   if (property_get(prop_name, prop_value, nullptr) > 0) {
@@ -56,6 +63,45 @@ void add_string_property(cJSON* json, const char* prop_name, const char* prop_va
 
 void add_number_property(cJSON* json, const char* prop_name, int prop_value, httplib::Response& res) {
   cJSON_AddNumberToObject(json, prop_name, prop_value);
+}
+
+void set_virtual_display_resolution_and_density(int width, int height, int density) {
+  const char* binaryPath = "/system/bin/wm";
+
+  std::ostringstream resolutionStream, densityStream;
+  resolutionStream << width << "x" << height;
+  densityStream << density;
+  std::string resolutionStr = resolutionStream.str();
+  std::string densityStr = densityStream.str();
+
+  const char* resolution = resolutionStr.c_str();
+  const char* densityCStr = densityStr.c_str();
+
+  pid_t pid;
+  pid = fork();
+  if (pid == -1) {
+    perror("fork failed");
+    exit(-1);
+  } else if (pid == 0) {
+    execlp(binaryPath, binaryPath, "size", resolution, NULL);
+    perror("execlp failed");
+    exit(-1);
+  }
+  int status;
+  wait(&status);
+  printf("child exit status: %d\n", WEXITSTATUS(status));
+
+  pid = fork();
+  if (pid == -1) {
+    perror("fork failed");
+    exit(-1);
+  } else if (pid == 0) {
+    execlp(binaryPath, binaryPath, "density", densityCStr, NULL);
+    perror("execlp failed");
+    exit(-1);
+  }
+  wait(&status);
+  printf("child exit status: %d\n", WEXITSTATUS(status));
 }
 
 int get_cpu_temperature() {
@@ -234,6 +280,63 @@ int main() {
   server.Options("/offlineModeTeslaFirmwareDownloads", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
    });
+
+  server.Get("/displayState", [](const httplib::Request& req, httplib::Response& res) {
+    cJSON* json = cJSON_CreateObject();
+
+    add_number_property(json, VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY, get_system_property_int(BAND_TYPE_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY, get_system_property_int(CHANNEL_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY, get_system_property_int(CHANNEL_WIDTH_SYSTEM_PROPERTY_KEY), res);
+
+    char* json_str = cJSON_Print(json);
+
+    res.set_header("Content-Type", "application/json");
+    res.set_content(json_str, "application/json");
+    res.status = 200;
+
+    cJSON_Delete(json);
+    free(json_str);
+  });
+
+  server.Post("/displayState", [](const httplib::Request& req, httplib::Response& res) {
+    cJSON* json = cJSON_Parse(req.body.c_str());
+
+    if (json == nullptr) {
+        const char* error_ptr = cJSON_GetErrorPtr();
+        if (error_ptr != nullptr) {
+            fprintf(stderr, "Error before: %s\n", error_ptr);
+        }
+        handle_error(res);
+        return;
+    }
+
+    cJSON* width = cJSON_GetObjectItemCaseSensitive(json, "width");
+    cJSON* height = cJSON_GetObjectItemCaseSensitive(json, "height");
+    cJSON* density = cJSON_GetObjectItemCaseSensitive(json, "density");
+
+    if (!cJSON_IsNumber(width) || !cJSON_IsNumber(height) || !cJSON_IsNumber(density)) {
+        handle_error(res);
+        cJSON_Delete(json);
+        return;
+    }
+
+    int widthSetPropertyResult = property_set(VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY, std::to_string(width->valueint).c_str());
+    int heightSetPropertyResult = property_set(VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY, std::to_string(height->valueint).c_str());
+    int densitySetPropertyResult = property_set(VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY, std::to_string(density->valueint).c_str());
+
+    if (widthSetPropertyResult == 0 && heightSetPropertyResult == 0 && densitySetPropertyResult == 0) {
+        handle_post_success(res);
+        set_virtual_display_resolution_and_density(width->valueint, height->valueint, density->valueint);
+    } else {
+        handle_error(res);
+    }
+
+    cJSON_Delete(json);
+  });
+
+  server.Options("/displayState", [](const httplib::Request& req, httplib::Response& res) {
+    handle_preflight(res);
+  });
 
   server.set_post_routing_handler([](const auto& req, auto& res) {
     res.set_header("Allow", "GET, POST, HEAD, OPTIONS");
