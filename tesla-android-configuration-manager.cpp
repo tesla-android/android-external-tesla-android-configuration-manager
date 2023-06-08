@@ -139,7 +139,7 @@ int main() {
 
   start_softap_if_enabled();
 
-  server.Get("/health", [](const httplib::Request& req, httplib::Response& res) {
+  server.Get("/api/health", [](const httplib::Request& req, httplib::Response& res) {
     cJSON* json = cJSON_CreateObject();
 
     add_number_property(json, "cpu_temperature", get_cpu_temperature(),  res);
@@ -154,11 +154,11 @@ int main() {
     free(json_str);
   });
 
-  server.Options("/health", [](const httplib::Request& req, httplib::Response& res) {
+  server.Options("/api/health", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
 
-  server.Get("/configuration", [](const httplib::Request& req, httplib::Response& res) {
+  server.Get("/api/configuration", [](const httplib::Request& req, httplib::Response& res) {
     cJSON* json = cJSON_CreateObject();
 
     add_number_property(json, BAND_TYPE_SYSTEM_PROPERTY_KEY, get_system_property_int(BAND_TYPE_SYSTEM_PROPERTY_KEY), res);
@@ -179,11 +179,11 @@ int main() {
     free(json_str);
   });
 
-  server.Options("/configuration", [](const httplib::Request& req, httplib::Response& res) {
+  server.Options("/api/configuration", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
 
-  server.Post("/softApBand", [](const httplib::Request& req, httplib::Response& res) {
+  server.Post("/api/softApBand", [](const httplib::Request& req, httplib::Response& res) {
     const char* new_value = req.body.c_str();
     int result = property_set(BAND_TYPE_SYSTEM_PROPERTY_KEY, new_value);
     if (result == 0) {
@@ -193,11 +193,11 @@ int main() {
     }
   });
 
-  server.Options("/softApBand", [](const httplib::Request& req, httplib::Response& res) {
+  server.Options("/api/softApBand", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
 
-  server.Post("/softApChannel", [](const httplib::Request& req, httplib::Response& res) {
+  server.Post("/api/softApChannel", [](const httplib::Request& req, httplib::Response& res) {
     const char* new_value = req.body.c_str();
     int result = property_set(CHANNEL_SYSTEM_PROPERTY_KEY, new_value);
     if (result == 0) {
@@ -207,11 +207,11 @@ int main() {
     }
   });
 
-  server.Options("/softApChannel", [](const httplib::Request& req, httplib::Response& res) {
+  server.Options("/api/softApChannel", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
 
-  server.Post("/softApChannelWidth", [](const httplib::Request& req, httplib::Response& res) {
+  server.Post("/api/softApChannelWidth", [](const httplib::Request& req, httplib::Response& res) {
     const char* new_value = req.body.c_str();
     int result = property_set(CHANNEL_WIDTH_SYSTEM_PROPERTY_KEY, new_value);
     if (result == 0) {
@@ -221,11 +221,11 @@ int main() {
     }
   });
 
-  server.Options("/softApChannelWidth", [](const httplib::Request& req, httplib::Response& res) {
+  server.Options("/api/softApChannelWidth", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
 
-  server.Post("/softApState", [](const httplib::Request& req, httplib::Response& res) {
+  server.Post("/api/softApState", [](const httplib::Request& req, httplib::Response& res) {
     const char* new_value = req.body.c_str();
     int result = property_set(IS_ENABLED_SYSTEM_PROPERTY_KEY, new_value);
     if (result == 0) {
@@ -235,11 +235,11 @@ int main() {
     }
   });
 
-  server.Options("/softApState", [](const httplib::Request& req, httplib::Response& res) {
+  server.Options("/api/softApState", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
 
-  server.Post("/offlineModeState", [](const httplib::Request& req, httplib::Response& res) {
+  server.Post("/api/offlineModeState", [](const httplib::Request& req, httplib::Response& res) {
     const char* new_value = req.body.c_str();
     int result = property_set(OFFLINE_MODE_IS_ENABLED_SYSTEM_PROPERTY_KEY, new_value);
     if (result == 0) {
@@ -249,11 +249,11 @@ int main() {
     }
   });
 
-  server.Options("/offlineModeState", [](const httplib::Request& req, httplib::Response& res) {
+  server.Options("/api/offlineModeState", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
 
-  server.Post("/offlineModeTelemetryState", [](const httplib::Request& req, httplib::Response& res) {
+  server.Post("/api/offlineModeTelemetryState", [](const httplib::Request& req, httplib::Response& res) {
     const char* new_value = req.body.c_str();
     int result = property_set(OFFLINE_MODE_TELEMETRY_IS_ENABLED_SYSTEM_PROPERTY_KEY, new_value);
     if (result == 0) {
@@ -263,11 +263,11 @@ int main() {
     }
   });
 
-  server.Options("/offlineModeTelemetryState", [](const httplib::Request& req, httplib::Response& res) {
+  server.Options("/api/offlineModeTelemetryState", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
 
-  server.Post("/offlineModeTeslaFirmwareDownloads", [](const httplib::Request& req, httplib::Response& res) {
+  server.Post("/api/offlineModeTeslaFirmwareDownloads", [](const httplib::Request& req, httplib::Response& res) {
     const char* new_value = req.body.c_str();
     int result = property_set(OFFLINE_MODE_TESLA_FIRMWARE_DOWNLOADS_IS_ENABLED_SYSTEM_PROPERTY_KEY, new_value);
     if (result == 0) {
@@ -277,11 +277,11 @@ int main() {
     }
   });
 
-  server.Options("/offlineModeTeslaFirmwareDownloads", [](const httplib::Request& req, httplib::Response& res) {
+  server.Options("/api/offlineModeTeslaFirmwareDownloads", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
    });
 
-  server.Get("/displayState", [](const httplib::Request& req, httplib::Response& res) {
+  server.Get("/api/displayState", [](const httplib::Request& req, httplib::Response& res) {
     cJSON* json = cJSON_CreateObject();
 
     add_number_property(json, VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY, get_system_property_int(BAND_TYPE_SYSTEM_PROPERTY_KEY), res);
@@ -298,7 +298,7 @@ int main() {
     free(json_str);
   });
 
-  server.Post("/displayState", [](const httplib::Request& req, httplib::Response& res) {
+  server.Post("/api/displayState", [](const httplib::Request& req, httplib::Response& res) {
     cJSON* json = cJSON_Parse(req.body.c_str());
 
     if (json == nullptr) {
@@ -334,7 +334,7 @@ int main() {
     cJSON_Delete(json);
   });
 
-  server.Options("/displayState", [](const httplib::Request& req, httplib::Response& res) {
+  server.Options("/api/displayState", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
 
