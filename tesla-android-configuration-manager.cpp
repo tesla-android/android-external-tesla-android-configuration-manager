@@ -284,9 +284,9 @@ int main() {
   server.Get("/api/displayState", [](const httplib::Request& req, httplib::Response& res) {
     cJSON* json = cJSON_CreateObject();
 
-    add_number_property(json, VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY, get_system_property_int(BAND_TYPE_SYSTEM_PROPERTY_KEY), res);
-    add_number_property(json, VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY, get_system_property_int(CHANNEL_SYSTEM_PROPERTY_KEY), res);
-    add_number_property(json, VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY, get_system_property_int(CHANNEL_WIDTH_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, "width", get_system_property_int(VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, "height", get_system_property_int(VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, "density", get_system_property_int(VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY), res);
 
     char* json_str = cJSON_Print(json);
 
