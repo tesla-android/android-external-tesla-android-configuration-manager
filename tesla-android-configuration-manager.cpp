@@ -16,7 +16,8 @@ const char *OFFLINE_MODE_TESLA_FIRMWARE_DOWNLOADS_IS_ENABLED_SYSTEM_PROPERTY_KEY
 const char *VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.resolution.width";
 const char *VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.resolution.height";
 const char *VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.density";
-
+const char *HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY = "persist.drm.headless.override.config";
+const char *HEADLESS_CONFIG_LATCH_PROPERTY_KEY = "persist.drm.headless.override.latch";
 
 int get_system_property_int(const char* prop_name) {
   char prop_value[PROPERTY_VALUE_MAX];
@@ -69,29 +70,19 @@ void set_virtual_display_resolution_and_density(int width, int height, int densi
   const char* binaryPath = "/system/bin/wm";
 
   std::ostringstream resolutionStream, densityStream;
-  resolutionStream << width << "x" << height;
+  resolutionStream << width << "x" << height << "@30";
+
   densityStream << density;
+
   std::string resolutionStr = resolutionStream.str();
   std::string densityStr = densityStream.str();
 
   const char* resolution = resolutionStr.c_str();
   const char* densityCStr = densityStr.c_str();
 
-  pid_t pid;
-  pid = fork();
-  if (pid == -1) {
-    perror("fork failed");
-    exit(-1);
-  } else if (pid == 0) {
-    execlp(binaryPath, binaryPath, "size", resolution, NULL);
-    perror("execlp failed");
-    exit(-1);
-  }
+  // Set density
+  pid_t pid = fork();
   int status;
-  wait(&status);
-  printf("child exit status: %d\n", WEXITSTATUS(status));
-
-  pid = fork();
   if (pid == -1) {
     perror("fork failed");
     exit(-1);
@@ -102,6 +93,53 @@ void set_virtual_display_resolution_and_density(int width, int height, int densi
   }
   wait(&status);
   printf("child exit status: %d\n", WEXITSTATUS(status));
+
+  // Unload virtual touchscreen module
+  const char* rmmodPath = "/vendor/bin/rmmod";
+  pid = fork();
+  if (pid == -1) {
+    perror("fork failed");
+    exit(-1);
+  } else if (pid == 0) {
+    execlp(rmmodPath, rmmodPath, "virtual_touchscreen", NULL);
+    perror("execlp failed");
+    exit(-1);
+  }
+  wait(NULL);
+
+  // Load virtual touchscreen
+  const char* modprobePath = "/vendor/bin/modprobe";
+
+  std::ostringstream absXMaxStream, absYMaxStream;
+  absXMaxStream << "abs_x_max_param=" << width;
+  absYMaxStream << "abs_y_max_param=" << height;
+  std::string absXMaxParam = absXMaxStream.str();
+  std::string absYMaxParam = absYMaxStream.str();
+
+  const char* absXMaxCStr = absXMaxParam.c_str();
+  const char* absYMaxCStr = absYMaxParam.c_str();
+
+  pid = fork();
+  if (pid == -1) {
+    perror("fork failed");
+    exit(-1);
+  } else if (pid == 0) {
+    execlp(modprobePath, modprobePath, "-d", "/vendor/lib/modules", "-a", "virtual_touchscreen", absXMaxCStr, absYMaxCStr, NULL);
+    perror("execlp failed");
+    exit(-1);
+  }
+  wait(&status);
+  printf("child exit status: %d\n", WEXITSTATUS(status));
+
+  // Check current headless resolution
+  std::string headlessOverrideValueStr = std::string(get_system_property(HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY));
+  if (headlessOverrideValueStr == resolutionStr) {
+    printf("Headless override config unchanged");
+  } else {
+    printf("Headless override config needs update, triggering the lath");
+    property_set(HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY, resolution);
+    property_set(HEADLESS_CONFIG_LATCH_PROPERTY_KEY, "1");
+  }
 }
 
 int get_cpu_temperature() {
