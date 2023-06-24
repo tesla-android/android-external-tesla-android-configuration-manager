@@ -5,6 +5,7 @@
 #include <cutils/properties.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 const char *BAND_TYPE_SYSTEM_PROPERTY_KEY = "persist.tesla-android.softap.band_type";
 const char *CHANNEL_SYSTEM_PROPERTY_KEY = "persist.tesla-android.softap.channel";
@@ -160,6 +161,9 @@ int get_cpu_temperature() {
 }
 
 void start_softap() {
+  // Global channels are used, region is set only to enable Wi-Fi 5
+  system("iw reg set US");
+  sleep(1);
   system("cmd wifi start-softap-with-existing-config");
 }
 
