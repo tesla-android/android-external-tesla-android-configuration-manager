@@ -162,6 +162,11 @@ int get_cpu_temperature() {
 }
 
 void start_softap() {
+  // Switch from channel 36 to 44
+  int channel = get_system_property_int(CHANNEL_SYSTEM_PROPERTY_KEY);
+  if(channel == 36) {
+    property_set(CHANNEL_SYSTEM_PROPERTY_KEY, "44");
+  }
   // Global channels are used, region is set only to enable Wi-Fi 5
   system("iw reg set US");
   sleep(1);
