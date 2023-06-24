@@ -18,8 +18,9 @@ const char *VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY = "persist.tesl
 const char *VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.resolution.height";
 const char *VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.density";
 const char *VIRTUAL_DISPLAY_LOWRES_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.lowres";
-const char *HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY = "persist.drm.headless.override.config";
-const char *HEADLESS_CONFIG_LATCH_PROPERTY_KEY = "persist.drm.headless.override.latch";
+const char *HEADLESS_CONFIG_IS_ENABLED_PROPERTY_KEY = "persist.drm_hwc.headless.is_enabled";
+const char *HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY = "persist.drm_hwc.headless.config";
+const char *HEADLESS_CONFIG_LATCH_PROPERTY_KEY = "persist.drm_hwc.latch";
 
 int get_system_property_int(const char* prop_name) {
   char prop_value[PROPERTY_VALUE_MAX];
@@ -72,7 +73,7 @@ void set_virtual_display_resolution_and_density(int width, int height, int densi
   const char* binaryPath = "/system/bin/wm";
 
   std::ostringstream resolutionStream, densityStream;
-  resolutionStream << width << "x" << height << "@60";
+  resolutionStream << width << "x" << height << "@30";
 
   densityStream << density;
 
@@ -331,6 +332,7 @@ int main() {
     add_number_property(json, "height", get_system_property_int(VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "density", get_system_property_int(VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "lowres", get_system_property_int(VIRTUAL_DISPLAY_LOWRES_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, "isHeadless", get_system_property_int(HEADLESS_CONFIG_IS_ENABLED_PROPERTY_KEY), res);
 
     char* json_str = cJSON_Print(json);
 
