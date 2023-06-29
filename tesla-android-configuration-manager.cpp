@@ -137,8 +137,11 @@ void set_virtual_display_resolution_and_density(int width, int height, int densi
 
   // Check current headless resolution
   std::string headlessOverrideValueStr = std::string(get_system_property(HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY));
+  int isHeadless = get_system_property_int(HEADLESS_CONFIG_IS_ENABLED_PROPERTY_KEY);
   if (headlessOverrideValueStr == resolutionStr) {
     printf("Headless override config unchanged");
+  } if (isHeadless == 0) {
+    print("Not in headless mode, resize not needed");
   } else {
     printf("Headless override config needs update, triggering the lath");
     property_set(HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY, resolution);
