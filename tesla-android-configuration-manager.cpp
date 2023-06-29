@@ -18,6 +18,7 @@ const char *VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY = "persist.tesl
 const char *VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.resolution.height";
 const char *VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.density";
 const char *VIRTUAL_DISPLAY_LOWRES_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.lowres";
+const char *VIRTUAL_DISPLAY_RENDERER_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.renderer";
 const char *HEADLESS_CONFIG_IS_ENABLED_PROPERTY_KEY = "persist.drm_hwc.headless.is_enabled";
 const char *HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY = "persist.drm_hwc.headless.config";
 const char *HEADLESS_CONFIG_LATCH_PROPERTY_KEY = "persist.drm_hwc.latch";
@@ -337,6 +338,7 @@ int main() {
     add_number_property(json, "height", get_system_property_int(VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "density", get_system_property_int(VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "lowres", get_system_property_int(VIRTUAL_DISPLAY_LOWRES_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, "renderer", get_system_property_int(VIRTUAL_DISPLAY_RENDERER_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "isHeadless", get_system_property_int(HEADLESS_CONFIG_IS_ENABLED_PROPERTY_KEY), res);
 
     char* json_str = cJSON_Print(json);
@@ -365,8 +367,9 @@ int main() {
     cJSON* height = cJSON_GetObjectItemCaseSensitive(json, "height");
     cJSON* density = cJSON_GetObjectItemCaseSensitive(json, "density");
     cJSON* lowres = cJSON_GetObjectItemCaseSensitive(json, "lowres");
+    cJSON* renderer = cJSON_GetObjectItemCaseSensitive(json, "renderer");
 
-    if (!cJSON_IsNumber(width) || !cJSON_IsNumber(height) || !cJSON_IsNumber(density) || !cJSON_IsNumber(lowres)) {
+    if (!cJSON_IsNumber(width) || !cJSON_IsNumber(height) || !cJSON_IsNumber(density) || !cJSON_IsNumber(lowres) || !cJSON_IsNumber(renderer)) {
         handle_error(res);
         cJSON_Delete(json);
         return;
@@ -376,8 +379,9 @@ int main() {
     int heightSetPropertyResult = property_set(VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY, std::to_string(height->valueint).c_str());
     int densitySetPropertyResult = property_set(VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY, std::to_string(density->valueint).c_str());
     int lowresSetPropertyResult = property_set(VIRTUAL_DISPLAY_LOWRES_SYSTEM_PROPERTY_KEY, std::to_string(lowres->valueint).c_str());
+    int rendererSetPropertyResult = property_set(VIRTUAL_DISPLAY_RENDERER_SYSTEM_PROPERTY_KEY, std::to_string(renderer->valueint).c_str());
 
-    if (widthSetPropertyResult == 0 && heightSetPropertyResult == 0 && densitySetPropertyResult == 0 && lowresSetPropertyResult == 0) {
+    if (widthSetPropertyResult == 0 && heightSetPropertyResult == 0 && densitySetPropertyResult == 0 && lowresSetPropertyResult == 0 && rendererSetPropertyResult == 0) {
         handle_post_success(res);
         set_virtual_display_resolution_and_density(width->valueint, height->valueint, density->valueint);
     } else {
