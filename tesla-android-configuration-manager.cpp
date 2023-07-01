@@ -84,9 +84,23 @@ void set_virtual_display_resolution_and_density(int width, int height, int densi
   const char* resolution = resolutionStr.c_str();
   const char* densityCStr = densityStr.c_str();
 
-  // Set density
+  //Disable old overrides
   pid_t pid = fork();
   int status;
+  if (pid == -1) {
+    perror("fork failed");
+    exit(-1);
+  } else if (pid == 0) {
+    execlp(binaryPath, binaryPath, "size", "reset", NULL);
+    perror("execlp failed");
+    exit(-1);
+  }
+  wait(&status);
+  printf("child exit status: %d\n", WEXITSTATUS(status));
+
+  // Set density
+  pid = fork();
+  status;
   if (pid == -1) {
     perror("fork failed");
     exit(-1);
