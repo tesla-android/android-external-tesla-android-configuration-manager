@@ -100,7 +100,6 @@ void set_virtual_display_resolution_and_density(int width, int height, int densi
 
   // Set density
   pid = fork();
-  status;
   if (pid == -1) {
     perror("fork failed");
     exit(-1);
