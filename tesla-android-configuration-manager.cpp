@@ -202,10 +202,19 @@ void start_softap_if_enabled() {
   }
 }
 
+void set_initial_display_resolution() {
+  int width = get_system_property_int(VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY);
+  int height = get_system_property_int(VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY);
+  int density = get_system_property_int(VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY);
+  set_virtual_display_resolution_and_density(width, height, density);
+}
+
 int main() {
   httplib::Server server;
 
   start_softap_if_enabled();
+
+  set_initial_display_resolution();
 
   server.Get("/api/health", [](const httplib::Request& req, httplib::Response& res) {
     cJSON* json = cJSON_CreateObject();
