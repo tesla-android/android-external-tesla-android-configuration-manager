@@ -161,8 +161,11 @@ void set_virtual_display_resolution_and_density(int width, int height, int densi
     printf("Not in headless mode, resize not needed");
   } else {
     printf("Headless override config needs update, triggering the lath");
+    system("stop tesla-android-virtual-display");
     property_set(HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY, resolution);
     property_set(HEADLESS_CONFIG_LATCH_PROPERTY_KEY, "1");
+    sleep(1);
+    system("start tesla-android-virtual-display");
   }
 }
 
@@ -446,7 +449,8 @@ int main() {
     int isResponsiveSetPropertyResult = property_set(VIRTUAL_DISPLAY_IS_RESPONSIVE_SYSTEM_PROPERTY_KEY, std::to_string(isResponsive->valueint).c_str());
     int isH264SetPropertyResult = property_set(VIRTUAL_DISPLAY_IS_H264_SYSTEM_PROPERTY_KEY, std::to_string(isH264->valueint).c_str());
 
-    if (widthSetPropertyResult == 0 && heightSetPropertyResult == 0 && densitySetPropertyResult == 0 && lowresSetPropertyResult == 0 && rendererSetPropertyResult == 0 && isResponsiveSetPropertyResult == 0 && isH264SetPropertyResult = 0) {
+    if (widthSetPropertyResult == 0 && heightSetPropertyResult == 0 && densitySetPropertyResult == 0 && lowresSetPropertyResult == 0 && rendererSetPropertyResult == 0 && isResponsiveSetPropertyResult == 0 && 
+isH264SetPropertyResult == 0) {
         handle_post_success(res);
         set_virtual_display_resolution_and_density(width->valueint, height->valueint, density->valueint);
     } else {
