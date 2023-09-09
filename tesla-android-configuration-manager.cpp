@@ -186,6 +186,29 @@ int get_cpu_temperature() {
     return temperatureCelsius;
 }
 
+char* get_serial_number() {
+    uint32_t serial = 0;
+    static char serialStr[17];
+
+    FILE *fp = fopen("/sys/firmware/devicetree/base/serial-number", "r");
+
+    if (fp == NULL) {
+        perror("/sys/firmware/devicetree/base/serial-number");
+        exit(EXIT_FAILURE);
+    }
+
+    if (fscanf(fp, "%x", &serial) != 1) {
+        perror("Failed to read serial number");
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    fclose(fp);
+
+    snprintf(serialStr, sizeof(serialStr), "%08x", serial);
+    return serialStr;
+}
+
 void start_softap() {
   // Switch from channel 36 to 44
   int channel = get_system_property_int(CHANNEL_SYSTEM_PROPERTY_KEY);
@@ -225,7 +248,9 @@ int main() {
   server.Get("/api/health", [](const httplib::Request& req, httplib::Response& res) {
     cJSON* json = cJSON_CreateObject();
 
-    add_number_property(json, "cpu_temperature", get_cpu_temperature(),  res);
+    add_number_property(json, "cpu_temperature", get_cpu_temperature(), res);
+    add_string_property(json, "serial_number", get_serial_number(), res);
+    add_string_property(json, "device_model", get_system_property("ro.product.model"), res);
 
     char* json_str = cJSON_Print(json);
 
