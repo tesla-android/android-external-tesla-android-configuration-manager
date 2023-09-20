@@ -6,6 +6,15 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
 
 const char *BAND_TYPE_SYSTEM_PROPERTY_KEY = "persist.tesla-android.softap.band_type";
 const char *CHANNEL_SYSTEM_PROPERTY_KEY = "persist.tesla-android.softap.channel";
@@ -44,6 +53,96 @@ const char* get_system_property(const char* prop_name) {
   } else {
     return nullptr;
   }
+}
+
+int is_usb_device_present(const char *vendor_id, const char *product_id) {
+    const char *usb_devices_path = "/sys/bus/usb/devices/";
+    DIR *dir;
+    struct dirent *entry;
+
+    dir = opendir(usb_devices_path);
+    if (!dir) {
+        perror("Could not open /sys/bus/usb/devices");
+        exit(EXIT_FAILURE);
+    }
+
+    while ((entry = readdir(dir)) != NULL) {
+        char vendor_file_path[256];
+        char product_file_path[256];
+        char vid[5], pid[5];
+
+        snprintf(vendor_file_path, sizeof(vendor_file_path), "%s%s/idVendor", usb_devices_path, entry->d_name);
+        snprintf(product_file_path, sizeof(product_file_path), "%s%s/idProduct", usb_devices_path, entry->d_name);
+
+        FILE *vendor_file = fopen(vendor_file_path, "r");
+        FILE *product_file = fopen(product_file_path, "r");
+
+        if (!vendor_file || !product_file) {
+            if (vendor_file) fclose(vendor_file);
+            if (product_file) fclose(product_file);
+            continue;
+        }
+
+        fgets(vid, sizeof(vid), vendor_file);
+        fgets(pid, sizeof(pid), product_file);
+
+        fclose(vendor_file);
+        fclose(product_file);
+
+        vid[strcspn(vid, "\n")] = 0;
+        pid[strcspn(pid, "\n")] = 0;
+
+        if (strcmp(vid, vendor_id) == 0 && strcmp(pid, product_id) == 0) {
+            closedir(dir);
+            return 1;
+        }
+    }
+
+    closedir(dir);
+    return 0;
+}
+
+int is_port_open(const char *ip, int port) {
+    struct sockaddr_in address;
+    int sockfd, status;
+    struct timeval timeout;
+
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+    setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
+
+    address.sin_family = AF_INET;
+    address.sin_port = htons(port);
+    inet_pton(AF_INET, ip, &address.sin_addr);
+
+    status = connect(sockfd, (struct sockaddr *)&address, sizeof(address));
+    close(sockfd);
+
+    return status == 0;
+}
+
+int does_interface_exist(const char *interface_name) {
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    struct ifreq ifr;
+    strncpy(ifr.ifr_name, interface_name, IFNAMSIZ);
+
+    int result = ioctl(sockfd, SIOCGIFINDEX, &ifr);
+    close(sockfd);
+
+    return result != -1;
 }
 
 void handle_post_success(httplib::Response& res) {
@@ -245,12 +344,17 @@ int main() {
 
   set_initial_display_resolution();
 
-  server.Get("/api/health", [](const httplib::Request& req, httplib::Response& res) {
+  server.Get("/api/deviceInfo", [](const httplib::Request& req, httplib::Response& res) {
     cJSON* json = cJSON_CreateObject();
+
+	int modem_status = is_port_open("192.168.8.1", 80) && (does_interface_exist("eth1") || does_interface_exist("eth2"));
+    int carplay_status = is_usb_device_present("1314", "1520") || is_usb_device_present("1314", "1521");
 
     add_number_property(json, "cpu_temperature", get_cpu_temperature(), res);
     add_string_property(json, "serial_number", get_serial_number(), res);
     add_string_property(json, "device_model", get_system_property("ro.product.model"), res);
+    add_number_property(json, "is_modem_detected", modem_status, res);
+    add_number_property(json, "is_carplay_detected", carplay_status, res);
 
     char* json_str = cJSON_Print(json);
 
@@ -260,6 +364,14 @@ int main() {
 
     cJSON_Delete(json);
     free(json_str);
+  });
+
+  server.Options("/api/deviceInfo", [](const httplib::Request& req, httplib::Response& res) {
+    handle_preflight(res);
+  });
+
+  server.Get("/api/health", [](const httplib::Request& req, httplib::Response& res) {
+    res.status = 200;
   });
 
   server.Options("/api/health", [](const httplib::Request& req, httplib::Response& res) {
