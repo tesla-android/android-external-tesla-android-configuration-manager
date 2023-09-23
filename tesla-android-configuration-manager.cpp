@@ -348,7 +348,7 @@ int main() {
   server.Get("/api/deviceInfo", [](const httplib::Request& req, httplib::Response& res) {
     cJSON* json = cJSON_CreateObject();
 
-	int modem_status = is_port_open("192.168.8.1", 80) && (does_interface_exist("eth1") || does_interface_exist("eth2"));
+    int modem_status = (is_port_open("192.168.1.1", 80) || is_port_open("192.168.8.1", 80)) && (does_interface_exist("eth1") || does_interface_exist("eth2"));
     int carplay_status = is_usb_device_present("1314", "1520") || is_usb_device_present("1314", "1521");
 
     add_number_property(json, "cpu_temperature", get_cpu_temperature(), res);
