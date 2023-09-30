@@ -36,7 +36,6 @@ const char *HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY = "persist.drm_hwc.headless.co
 const char *HEADLESS_CONFIG_LATCH_PROPERTY_KEY = "persist.drm_hwc.latch";
 const char *BROWSER_AUDIO_IS_ENABLED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.browser_audio.is_enabled";
 const char *BROWSER_AUDIO_VOLUME_SYSTEM_PROPERTY_KEY = "persist.tesla-android.browser_audio.volume";
-const char *HWUI_USE_VULKAN_SYSTEM_PROPERTY_KEY = "persist.hwui.use_vulkan";
 
 int get_system_property_int(const char* prop_name) {
   char prop_value[PROPERTY_VALUE_MAX];
@@ -532,21 +531,6 @@ int main() {
     handle_preflight(res);
    });
 
-  // FIXME: Temporary, vulkan will be always enabled in a few releases
-  server.Post("/api/vulkanState", [](const httplib::Request& req, httplib::Response& res) {
-    const char* new_value = req.body.c_str();
-    int result = property_set(HWUI_USE_VULKAN_SYSTEM_PROPERTY_KEY, new_value);
-    if (result == 0) {
-        handle_post_success(res);
-    } else {
-        handle_error(res);
-    }
-  });
-
-  server.Options("/api/vulkanState", [](const httplib::Request& req, httplib::Response& res) {
-    handle_preflight(res);
-  });
-
   server.Get("/api/displayState", [](const httplib::Request& req, httplib::Response& res) {
     cJSON* json = cJSON_CreateObject();
 
@@ -559,7 +543,6 @@ int main() {
     add_number_property(json, "isH264", get_system_property_int(VIRTUAL_DISPLAY_IS_H264_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "isHeadless", get_system_property_int(HEADLESS_CONFIG_IS_ENABLED_PROPERTY_KEY), res);
     add_number_property(json, "isVariableRefresh", get_system_property_int(VIRTUAL_DISPLAY_IS_VARIABLE_REFRESH_SYSTEM_PROPERTY_KEY), res);
-    add_string_property(json, "useVulkan", get_system_property(HWUI_USE_VULKAN_SYSTEM_PROPERTY_KEY), res);
 
     char* json_str = cJSON_Print(json);
 
