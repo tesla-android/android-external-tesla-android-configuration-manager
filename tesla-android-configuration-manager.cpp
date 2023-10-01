@@ -343,6 +343,15 @@ int main() {
 
   set_initial_display_resolution();
 
+  server.Get("/api/openUpdater", [](const httplib::Request& req, httplib::Response& res) {
+    system("am start -a android.settings.SYSTEM_UPDATE_SETTINGS");
+    res.status = 200;
+  });
+
+  server.Options("/api/openUpdater", [](const httplib::Request& req, httplib::Response& res) {
+    handle_preflight(res);
+  });
+
   server.Get("/api/deviceInfo", [](const httplib::Request& req, httplib::Response& res) {
     cJSON* json = cJSON_CreateObject();
 
