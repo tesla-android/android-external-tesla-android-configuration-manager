@@ -324,9 +324,9 @@ void stop_softap() {
 }
 
 void start_softap_if_enabled() {
-  if(get_system_property_int(IS_ENABLED_SYSTEM_PROPERTY_KEY) == 1) {
+  //if(get_system_property_int(IS_ENABLED_SYSTEM_PROPERTY_KEY) == 1) {
     start_softap();
-  }
+  //}
 }
 
 void set_initial_display_resolution() {
