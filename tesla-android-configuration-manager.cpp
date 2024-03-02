@@ -35,6 +35,8 @@ const char *HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY = "persist.drm_hwc.headless.co
 const char *HEADLESS_CONFIG_LATCH_PROPERTY_KEY = "persist.drm_hwc.latch";
 const char *BROWSER_AUDIO_IS_ENABLED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.browser_audio.is_enabled";
 const char *BROWSER_AUDIO_VOLUME_SYSTEM_PROPERTY_KEY = "persist.tesla-android.browser_audio.volume";
+const char *RELEASE_TYPE_SYSTEM_PROPERTY_KEY = "persist.tesla-android.releasetype";
+const char *OTA_URL_SYSTEM_PROPERTY_KEY = "persist.tesla-android.updater.uri";
 
 int get_system_property_int(const char* prop_name) {
   char prop_value[PROPERTY_VALUE_MAX];
@@ -363,6 +365,8 @@ int main() {
     add_string_property(json, "device_model", get_system_property("ro.product.model"), res);
     add_number_property(json, "is_modem_detected", modem_status, res);
     add_number_property(json, "is_carplay_detected", carplay_status, res);
+    add_string_property(json, "release_type", get_system_property(RELEASE_TYPE_SYSTEM_PROPERTY_KEY), res);
+    add_string_property(json, "ota_url", get_system_property(OTA_URL_SYSTEM_PROPERTY_KEY), res);
 
     char* json_str = cJSON_Print(json);
 
@@ -410,6 +414,34 @@ int main() {
   });
 
   server.Options("/api/configuration", [](const httplib::Request& req, httplib::Response& res) {
+    handle_preflight(res);
+  });
+  
+    server.Post("/api/overrideReleaseType", [](const httplib::Request& req, httplib::Response& res) {
+    const char* new_value = req.body.c_str();
+    int result = property_set(RELEASE_TYPE_SYSTEM_PROPERTY_KEY, new_value);
+    if (result == 0) {
+        handle_post_success(res);
+    } else {
+        handle_error(res);
+    }
+  });
+
+  server.Options("/api/overrideReleaseType", [](const httplib::Request& req, httplib::Response& res) {
+    handle_preflight(res);
+  });
+  
+    server.Post("/api/overrideOtaUrl", [](const httplib::Request& req, httplib::Response& res) {
+    const char* new_value = req.body.c_str();
+    int result = property_set(OTA_URL_SYSTEM_PROPERTY_KEY, new_value);
+    if (result == 0) {
+        handle_post_success(res);
+    } else {
+        handle_error(res);
+    }
+  });
+
+  server.Options("/api/overrideOtaUrl", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
     
