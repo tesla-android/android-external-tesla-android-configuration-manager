@@ -647,7 +647,7 @@ int main() {
 
     if (widthSetPropertyResult == 0 && heightSetPropertyResult == 0 && densitySetPropertyResult == 0 && lowresSetPropertyResult == 0 && rendererSetPropertyResult == 0 && isResponsiveSetPropertyResult == 0 && isH264SetPropertyResult == 0 && refreshRateSetPropertyResult == 0 && qualitySetPropertyResult == 0) {
         handle_post_success(res);
-        configure_virtual_display(width->valueint, height->valueint, density->valueint);
+        configure_virtual_display(width->valueint, height->valueint, density->valueint, refreshRate->valueint);
     } else {
         handle_error(res);
     }
