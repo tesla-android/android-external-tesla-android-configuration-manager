@@ -30,6 +30,8 @@ const char *VIRTUAL_DISPLAY_LOWRES_SYSTEM_PROPERTY_KEY = "persist.tesla-android.
 const char *VIRTUAL_DISPLAY_RENDERER_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.renderer";
 const char *VIRTUAL_DISPLAY_IS_RESPONSIVE_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.is_responsive";
 const char *VIRTUAL_DISPLAY_IS_H264_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.is_h264";
+const char *VIRTUAL_DISPLAY_REFRESH_RATE_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.refresh_rate";
+const char *VIRTUAL_DISPLAY_QUALITY_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.quality";
 const char *HEADLESS_CONFIG_IS_ENABLED_PROPERTY_KEY = "persist.drm_hwc.headless.is_enabled";
 const char *HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY = "persist.drm_hwc.headless.config";
 const char *HEADLESS_CONFIG_LATCH_PROPERTY_KEY = "persist.drm_hwc.latch";
@@ -175,11 +177,11 @@ void add_number_property(cJSON* json, const char* prop_name, int prop_value, htt
   cJSON_AddNumberToObject(json, prop_name, prop_value);
 }
 
-void set_virtual_display_resolution_and_density(int width, int height, int density) {
+void configure_virtual_display(int width, int height, int density, int refreshRate) {
   const char* binaryPath = "/system/bin/wm";
 
   std::ostringstream resolutionStream, densityStream;
-  resolutionStream << width << "x" << height << "@30";
+  resolutionStream << width << "x" << height << "@" << refreshRate;
 
   densityStream << density;
 
@@ -295,7 +297,7 @@ char* get_serial_number() {
     if (fp == NULL) {
         perror("/sys/firmware/devicetree/base/serial-number");
         exit(EXIT_FAILURE);
-    }
+    }  
 
     if (fscanf(fp, "%x", &serial) != 1) {
         perror("Failed to read serial number");
@@ -335,7 +337,8 @@ void set_initial_display_resolution() {
   int width = get_system_property_int(VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY);
   int height = get_system_property_int(VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY);
   int density = get_system_property_int(VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY);
-  set_virtual_display_resolution_and_density(width, height, density);
+  int refresh_rate = get_system_property_int(VIRTUAL_DISPLAY_REFRESH_RATE_SYSTEM_PROPERTY_KEY);
+  configure_virtual_display(width, height, density, refresh_rate);
 }
 
 int main() {
@@ -416,8 +419,8 @@ int main() {
   server.Options("/api/configuration", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
-  
-    server.Post("/api/overrideReleaseType", [](const httplib::Request& req, httplib::Response& res) {
+
+  server.Post("/api/overrideReleaseType", [](const httplib::Request& req, httplib::Response& res) {
     const char* new_value = req.body.c_str();
     int result = property_set(RELEASE_TYPE_SYSTEM_PROPERTY_KEY, new_value);
     if (result == 0) {
@@ -430,8 +433,8 @@ int main() {
   server.Options("/api/overrideReleaseType", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
-  
-    server.Post("/api/overrideOtaUrl", [](const httplib::Request& req, httplib::Response& res) {
+
+  server.Post("/api/overrideOtaUrl", [](const httplib::Request& req, httplib::Response& res) {
     const char* new_value = req.body.c_str();
     int result = property_set(OTA_URL_SYSTEM_PROPERTY_KEY, new_value);
     if (result == 0) {
@@ -444,7 +447,7 @@ int main() {
   server.Options("/api/overrideOtaUrl", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
-    
+
   server.Post("/api/browserAudioState", [](const httplib::Request& req, httplib::Response& res) {
     const char* new_value = req.body.c_str();
     int result = property_set(BROWSER_AUDIO_IS_ENABLED_SYSTEM_PROPERTY_KEY, new_value);
@@ -458,7 +461,7 @@ int main() {
   server.Options("/api/browserAudioState", [](const httplib::Request& req, httplib::Response& res) {
     handle_preflight(res);
   });
-    
+
   server.Post("/api/browserAudioVolume", [](const httplib::Request& req, httplib::Response& res) {
     const char* new_value = req.body.c_str();
     int result = property_set(BROWSER_AUDIO_VOLUME_SYSTEM_PROPERTY_KEY, new_value);
@@ -577,6 +580,8 @@ int main() {
     add_number_property(json, "width", get_system_property_int(VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "height", get_system_property_int(VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "density", get_system_property_int(VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, "refreshRate", get_system_property_int(VIRTUAL_DISPLAY_REFRESH_RATE_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, "quality", get_system_property_int(VIRTUAL_DISPLAY_QUALITY_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "lowres", get_system_property_int(VIRTUAL_DISPLAY_LOWRES_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "renderer", get_system_property_int(VIRTUAL_DISPLAY_RENDERER_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "isResponsive", get_system_property_int(VIRTUAL_DISPLAY_IS_RESPONSIVE_SYSTEM_PROPERTY_KEY), res);
@@ -612,8 +617,10 @@ int main() {
     cJSON* renderer = cJSON_GetObjectItemCaseSensitive(json, "renderer");
     cJSON* isResponsive = cJSON_GetObjectItemCaseSensitive(json, "isResponsive");
     cJSON* isH264 = cJSON_GetObjectItemCaseSensitive(json, "isH264");
+    cJSON* refreshRate = cJSON_GetObjectItemCaseSensitive(json, "refreshRate");
+    cJSON* quality = cJSON_GetObjectItemCaseSensitive(json, "quality");
 
-    if (!cJSON_IsNumber(width) || !cJSON_IsNumber(height) || !cJSON_IsNumber(density) || !cJSON_IsNumber(lowres) || !cJSON_IsNumber(renderer) || !cJSON_IsNumber(isResponsive) || !cJSON_IsNumber(isH264)) {
+    if (!cJSON_IsNumber(width) || !cJSON_IsNumber(height) || !cJSON_IsNumber(density) || !cJSON_IsNumber(lowres) || !cJSON_IsNumber(renderer) || !cJSON_IsNumber(isResponsive) || !cJSON_IsNumber(isH264) || !cJSON_IsNumber(refreshRate) || !cJSON_IsNumber(quality)) {
         handle_error(res);
         cJSON_Delete(json);
         return;
@@ -626,11 +633,12 @@ int main() {
     int rendererSetPropertyResult = property_set(VIRTUAL_DISPLAY_RENDERER_SYSTEM_PROPERTY_KEY, std::to_string(renderer->valueint).c_str());
     int isResponsiveSetPropertyResult = property_set(VIRTUAL_DISPLAY_IS_RESPONSIVE_SYSTEM_PROPERTY_KEY, std::to_string(isResponsive->valueint).c_str());
     int isH264SetPropertyResult = property_set(VIRTUAL_DISPLAY_IS_H264_SYSTEM_PROPERTY_KEY, std::to_string(isH264->valueint).c_str());
+    int refreshRateSetPropertyResult = property_set(VIRTUAL_DISPLAY_REFRESH_RATE_SYSTEM_PROPERTY_KEY, std::to_string(refreshRate->valueint).c_str());
+    int qualitySetPropertyResult = property_set(VIRTUAL_DISPLAY_QUALITY_SYSTEM_PROPERTY_KEY, std::to_string(quality->valueint).c_str());
 
-    if (widthSetPropertyResult == 0 && heightSetPropertyResult == 0 && densitySetPropertyResult == 0 && lowresSetPropertyResult == 0 && rendererSetPropertyResult == 0 && isResponsiveSetPropertyResult == 0 && 
-isH264SetPropertyResult == 0) {
+    if (widthSetPropertyResult == 0 && heightSetPropertyResult == 0 && densitySetPropertyResult == 0 && lowresSetPropertyResult == 0 && rendererSetPropertyResult == 0 && isResponsiveSetPropertyResult == 0 && isH264SetPropertyResult == 0 && refreshRateSetPropertyResult == 0 && qualitySetPropertyResult == 0) {
         handle_post_success(res);
-        set_virtual_display_resolution_and_density(width->valueint, height->valueint, density->valueint);
+        configure_virtual_display(width->valueint, height->valueint, density->valueint);
     } else {
         handle_error(res);
     }
