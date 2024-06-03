@@ -298,7 +298,7 @@ char* get_serial_number() {
     if (fp == NULL) {
         perror("/sys/firmware/devicetree/base/serial-number");
         exit(EXIT_FAILURE);
-    }  
+    }
 
     if (fscanf(fp, "%x", &serial) != 1) {
         perror("Failed to read serial number");
@@ -312,14 +312,8 @@ char* get_serial_number() {
     return serialStr;
 }
 
-void start_softap() {
-  // Switch from channel 36 to 44
-  int channel = get_system_property_int(CHANNEL_SYSTEM_PROPERTY_KEY);
-  if(channel == 36) {
-    property_set(CHANNEL_SYSTEM_PROPERTY_KEY, "44");
-  }
-  // Global channels are used, region is set only to enable Wi-Fi 5
-  system("iw reg set US");
+void start_softap() { 
+  system("iw reg set PH");
   sleep(1);
   system("cmd wifi start-softap-with-existing-config");
 }
