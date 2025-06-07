@@ -32,6 +32,8 @@ const char *VIRTUAL_DISPLAY_IS_RESPONSIVE_SYSTEM_PROPERTY_KEY = "persist.tesla-a
 const char *VIRTUAL_DISPLAY_IS_H264_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.is_h264";
 const char *VIRTUAL_DISPLAY_REFRESH_RATE_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.refresh_rate";
 const char *VIRTUAL_DISPLAY_QUALITY_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.quality";
+const char *VIRTUAL_DISPLAY_IS_REAR_DISPLAY_ENABLED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.is-rear-display-enabled";
+const char *VIRTUAL_DISPLAY_IS_REAR_DISPLAY_PRIORITISED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.is-rear-display-prioritised";
 const char *HEADLESS_CONFIG_IS_ENABLED_PROPERTY_KEY = "persist.drm_hwc.headless.is_enabled";
 const char *HEADLESS_CONFIG_OVERRIDE_PROPERTY_KEY = "persist.drm_hwc.headless.config";
 const char *HEADLESS_CONFIG_LATCH_PROPERTY_KEY = "persist.drm_hwc.latch";
@@ -596,6 +598,8 @@ int main() {
     add_number_property(json, "isResponsive", get_system_property_int(VIRTUAL_DISPLAY_IS_RESPONSIVE_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "isH264", get_system_property_int(VIRTUAL_DISPLAY_IS_H264_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "isHeadless", get_system_property_int(HEADLESS_CONFIG_IS_ENABLED_PROPERTY_KEY), res);
+    add_number_property(json, "isRearDisplayEnabled", get_system_property_int(VIRTUAL_DISPLAY_IS_REAR_DISPLAY_ENABLED_SYSTEM_PROPERTY_KEY), res);
+	add_number_property(json, "isRearDisplayPrioritised", get_system_property_int(VIRTUAL_DISPLAY_IS_REAR_DISPLAY_PRIORITISED_SYSTEM_PROPERTY_KEY), res);
 
     char* json_str = cJSON_Print(json);
 
@@ -628,8 +632,10 @@ int main() {
     cJSON* isH264 = cJSON_GetObjectItemCaseSensitive(json, "isH264");
     cJSON* refreshRate = cJSON_GetObjectItemCaseSensitive(json, "refreshRate");
     cJSON* quality = cJSON_GetObjectItemCaseSensitive(json, "quality");
+    cJSON* isRearDisplayEnabled = cJSON_GetObjectItemCaseSensitive(json, "isRearDisplayEnabled");
+    cJSON* isRearDisplayPrioritised = cJSON_GetObjectItemCaseSensitive(json, "isRearDisplayPrioritised");
 
-    if (!cJSON_IsNumber(width) || !cJSON_IsNumber(height) || !cJSON_IsNumber(density) || !cJSON_IsNumber(lowres) || !cJSON_IsNumber(renderer) || !cJSON_IsNumber(isResponsive) || !cJSON_IsNumber(isH264) || !cJSON_IsNumber(refreshRate) || !cJSON_IsNumber(quality)) {
+    if (!cJSON_IsNumber(width) || !cJSON_IsNumber(height) || !cJSON_IsNumber(density) || !cJSON_IsNumber(lowres) || !cJSON_IsNumber(renderer) || !cJSON_IsNumber(isResponsive) || !cJSON_IsNumber(isH264) || !cJSON_IsNumber(refreshRate) || !cJSON_IsNumber(quality) || !cJSON_IsNumber(isRearDisplayEnabled) || !cJSON_IsNumber(isRearDisplayPrioritised)) {
         handle_error(res);
         cJSON_Delete(json);
         return;
@@ -644,8 +650,10 @@ int main() {
     int isH264SetPropertyResult = property_set(VIRTUAL_DISPLAY_IS_H264_SYSTEM_PROPERTY_KEY, std::to_string(isH264->valueint).c_str());
     int refreshRateSetPropertyResult = property_set(VIRTUAL_DISPLAY_REFRESH_RATE_SYSTEM_PROPERTY_KEY, std::to_string(refreshRate->valueint).c_str());
     int qualitySetPropertyResult = property_set(VIRTUAL_DISPLAY_QUALITY_SYSTEM_PROPERTY_KEY, std::to_string(quality->valueint).c_str());
+    int isRearDisplayEnabledSetPropertyResult = property_set(VIRTUAL_DISPLAY_IS_REAR_DISPLAY_ENABLED_SYSTEM_PROPERTY_KEY, std::to_string(isRearDisplayEnabled->valueint).c_str());
+    int isRearDisplayPrioritisedSetPropertyResult = property_set(VIRTUAL_DISPLAY_IS_REAR_DISPLAY_PRIORITISED_SYSTEM_PROPERTY_KEY, std::to_string(isRearDisplayPrioritised->valueint).c_str());
 
-    if (widthSetPropertyResult == 0 && heightSetPropertyResult == 0 && densitySetPropertyResult == 0 && lowresSetPropertyResult == 0 && rendererSetPropertyResult == 0 && isResponsiveSetPropertyResult == 0 && isH264SetPropertyResult == 0 && refreshRateSetPropertyResult == 0 && qualitySetPropertyResult == 0) {
+    if (widthSetPropertyResult == 0 && heightSetPropertyResult == 0 && densitySetPropertyResult == 0 && lowresSetPropertyResult == 0 && rendererSetPropertyResult == 0 && isResponsiveSetPropertyResult == 0 && isH264SetPropertyResult == 0 && refreshRateSetPropertyResult == 0 && qualitySetPropertyResult == 0 && isRearDisplayEnabledSetPropertyResult == 0 && isRearDisplayPrioritisedSetPropertyResult == 0) {
         handle_post_success(res);
         configure_virtual_display(width->valueint, height->valueint, density->valueint, refreshRate->valueint);
     } else {
