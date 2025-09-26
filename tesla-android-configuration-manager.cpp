@@ -26,7 +26,7 @@ const char *OFFLINE_MODE_TESLA_FIRMWARE_DOWNLOADS_IS_ENABLED_SYSTEM_PROPERTY_KEY
 const char *VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.resolution.width";
 const char *VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.resolution.height";
 const char *VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.density";
-const char *VIRTUAL_DISPLAY_LOWRES_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.lowres";
+const char *VIRTUAL_DISPLAY_RESOLUTION_PRESET_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.resolutionPreset";
 const char *VIRTUAL_DISPLAY_RENDERER_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.renderer";
 const char *VIRTUAL_DISPLAY_IS_RESPONSIVE_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.is_responsive";
 const char *VIRTUAL_DISPLAY_IS_H264_SYSTEM_PROPERTY_KEY = "persist.tesla-android.virtual-display.is_h264";
@@ -593,7 +593,7 @@ int main() {
     add_number_property(json, "density", get_system_property_int(VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "refreshRate", get_system_property_int(VIRTUAL_DISPLAY_REFRESH_RATE_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "quality", get_system_property_int(VIRTUAL_DISPLAY_QUALITY_SYSTEM_PROPERTY_KEY), res);
-    add_number_property(json, "lowres", get_system_property_int(VIRTUAL_DISPLAY_LOWRES_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, "resolutionPreset", get_system_property_int(VIRTUAL_DISPLAY_RESOLUTION_PRESET_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "renderer", get_system_property_int(VIRTUAL_DISPLAY_RENDERER_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "isResponsive", get_system_property_int(VIRTUAL_DISPLAY_IS_RESPONSIVE_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, "isH264", get_system_property_int(VIRTUAL_DISPLAY_IS_H264_SYSTEM_PROPERTY_KEY), res);
@@ -626,7 +626,7 @@ int main() {
     cJSON* width = cJSON_GetObjectItemCaseSensitive(json, "width");
     cJSON* height = cJSON_GetObjectItemCaseSensitive(json, "height");
     cJSON* density = cJSON_GetObjectItemCaseSensitive(json, "density");
-    cJSON* lowres = cJSON_GetObjectItemCaseSensitive(json, "lowres");
+    cJSON* resolutionPreset = cJSON_GetObjectItemCaseSensitive(json, "resolutionPreset");
     cJSON* renderer = cJSON_GetObjectItemCaseSensitive(json, "renderer");
     cJSON* isResponsive = cJSON_GetObjectItemCaseSensitive(json, "isResponsive");
     cJSON* isH264 = cJSON_GetObjectItemCaseSensitive(json, "isH264");
@@ -635,7 +635,7 @@ int main() {
     cJSON* isRearDisplayEnabled = cJSON_GetObjectItemCaseSensitive(json, "isRearDisplayEnabled");
     cJSON* isRearDisplayPrioritised = cJSON_GetObjectItemCaseSensitive(json, "isRearDisplayPrioritised");
 
-    if (!cJSON_IsNumber(width) || !cJSON_IsNumber(height) || !cJSON_IsNumber(density) || !cJSON_IsNumber(lowres) || !cJSON_IsNumber(renderer) || !cJSON_IsNumber(isResponsive) || !cJSON_IsNumber(isH264) || !cJSON_IsNumber(refreshRate) || !cJSON_IsNumber(quality) || !cJSON_IsNumber(isRearDisplayEnabled) || !cJSON_IsNumber(isRearDisplayPrioritised)) {
+    if (!cJSON_IsNumber(width) || !cJSON_IsNumber(height) || !cJSON_IsNumber(density) || !cJSON_IsNumber(resolutionPreset) || !cJSON_IsNumber(renderer) || !cJSON_IsNumber(isResponsive) || !cJSON_IsNumber(isH264) || !cJSON_IsNumber(refreshRate) || !cJSON_IsNumber(quality) || !cJSON_IsNumber(isRearDisplayEnabled) || !cJSON_IsNumber(isRearDisplayPrioritised)) {
         handle_error(res);
         cJSON_Delete(json);
         return;
@@ -644,7 +644,7 @@ int main() {
     int widthSetPropertyResult = property_set(VIRTUAL_DISPLAY_RESOLUTION_WIDTH_SYSTEM_PROPERTY_KEY, std::to_string(width->valueint).c_str());
     int heightSetPropertyResult = property_set(VIRTUAL_DISPLAY_RESOLUTION_HEIGHT_SYSTEM_PROPERTY_KEY, std::to_string(height->valueint).c_str());
     int densitySetPropertyResult = property_set(VIRTUAL_DISPLAY_DENSITY_SYSTEM_PROPERTY_KEY, std::to_string(density->valueint).c_str());
-    int lowresSetPropertyResult = property_set(VIRTUAL_DISPLAY_LOWRES_SYSTEM_PROPERTY_KEY, std::to_string(lowres->valueint).c_str());
+    int resolutionPresetSetPropertyResult = property_set(VIRTUAL_DISPLAY_RESOLUTION_PRESET_SYSTEM_PROPERTY_KEY, std::to_string(resolutionPreset->valueint).c_str());
     int rendererSetPropertyResult = property_set(VIRTUAL_DISPLAY_RENDERER_SYSTEM_PROPERTY_KEY, std::to_string(renderer->valueint).c_str());
     int isResponsiveSetPropertyResult = property_set(VIRTUAL_DISPLAY_IS_RESPONSIVE_SYSTEM_PROPERTY_KEY, std::to_string(isResponsive->valueint).c_str());
     int isH264SetPropertyResult = property_set(VIRTUAL_DISPLAY_IS_H264_SYSTEM_PROPERTY_KEY, std::to_string(isH264->valueint).c_str());
@@ -653,7 +653,7 @@ int main() {
     int isRearDisplayEnabledSetPropertyResult = property_set(VIRTUAL_DISPLAY_IS_REAR_DISPLAY_ENABLED_SYSTEM_PROPERTY_KEY, std::to_string(isRearDisplayEnabled->valueint).c_str());
     int isRearDisplayPrioritisedSetPropertyResult = property_set(VIRTUAL_DISPLAY_IS_REAR_DISPLAY_PRIORITISED_SYSTEM_PROPERTY_KEY, std::to_string(isRearDisplayPrioritised->valueint).c_str());
 
-    if (widthSetPropertyResult == 0 && heightSetPropertyResult == 0 && densitySetPropertyResult == 0 && lowresSetPropertyResult == 0 && rendererSetPropertyResult == 0 && isResponsiveSetPropertyResult == 0 && isH264SetPropertyResult == 0 && refreshRateSetPropertyResult == 0 && qualitySetPropertyResult == 0 && isRearDisplayEnabledSetPropertyResult == 0 && isRearDisplayPrioritisedSetPropertyResult == 0) {
+    if (widthSetPropertyResult == 0 && heightSetPropertyResult == 0 && densitySetPropertyResult == 0 && resolutionPresetSetPropertyResult == 0 && rendererSetPropertyResult == 0 && isResponsiveSetPropertyResult == 0 && isH264SetPropertyResult == 0 && refreshRateSetPropertyResult == 0 && qualitySetPropertyResult == 0 && isRearDisplayEnabledSetPropertyResult == 0 && isRearDisplayPrioritisedSetPropertyResult == 0) {
         handle_post_success(res);
         configure_virtual_display(width->valueint, height->valueint, density->valueint, refreshRate->valueint);
     } else {
