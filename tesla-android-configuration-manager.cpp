@@ -42,6 +42,7 @@ const char *BROWSER_AUDIO_VOLUME_SYSTEM_PROPERTY_KEY = "persist.tesla-android.br
 const char *RELEASE_TYPE_SYSTEM_PROPERTY_KEY = "persist.tesla-android.releasetype";
 const char *OTA_URL_SYSTEM_PROPERTY_KEY = "persist.tesla-android.updater.uri";
 const char *GPS_IS_ENABLED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.gps.is_active";
+const char *GPS_HARDWARE_IS_DETECTED_SYSTEM_PROPERTY_KEY = "persist.tesla-android.gps_hw.is_detected";
 
 int get_system_property_int(const char* prop_name) {
   char prop_value[PROPERTY_VALUE_MAX];
@@ -403,6 +404,8 @@ int main() {
     add_number_property(json, BROWSER_AUDIO_IS_ENABLED_SYSTEM_PROPERTY_KEY, get_system_property_int(BROWSER_AUDIO_IS_ENABLED_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, BROWSER_AUDIO_VOLUME_SYSTEM_PROPERTY_KEY, get_system_property_int(BROWSER_AUDIO_VOLUME_SYSTEM_PROPERTY_KEY), res);
     add_number_property(json, GPS_IS_ENABLED_SYSTEM_PROPERTY_KEY, get_system_property_int(GPS_IS_ENABLED_SYSTEM_PROPERTY_KEY), res);
+    add_number_property(json, GPS_HARDWARE_IS_DETECTED_SYSTEM_PROPERTY_KEY, get_system_property_int(GPS_HARDWARE_IS_DETECTED_SYSTEM_PROPERTY_KEY), res);
+
     char* json_str = cJSON_Print(json);
 
     res.set_header("Content-Type", "application/json");
